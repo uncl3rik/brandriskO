@@ -85,6 +85,6 @@ export function BrandriskApp({ initialQuery }: { initialQuery?: string }) {
     </div></section>}
     {mode === "loading" && <section className="hero"><div className="hero-inner loading-panel"><div className="loading-card" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" /><h1>{loadingText}</h1><p>Vi kontrollerar svenska myndigheters aktuella data.</p></div></div></section>}
     {mode === "result" && status && <FireResult data={status} onReset={reset} />}
-    <footer className="site-footer"><span>Data från Myndigheten för civilt försvar och OpenStreetMap.</span><a href="https://www.msb.se/sv/amnesomraden/skydd-mot-olyckor-och-farliga-amnen/brand-och-explosion/brandrisk-och-eldningsforbud/" target="_blank" rel="noopener noreferrer">Om brandrisk hos myndigheten</a></footer>
+    <footer className="site-footer"><span>Data från Myndigheten för civilt försvar. Byggt av KEZAB</span><a href="https://www.mcf.se/sv/om-oss/kommunikationskanaler/appar/brandrisk-ute/" target="_blank" rel="noopener noreferrer">Om Brandrisk Ute hos myndigheten</a></footer>
   </div>;
 }
