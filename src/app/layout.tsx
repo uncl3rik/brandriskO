@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: { default: "Brandrisk idag – Eldningsförbud och brandrisk", template: "%s | Brandrisk" },
   description: "Se aktuell brandrisk och status för eldningsförbud på din plats i Sverige.",
   applicationName: "Brandrisk",
+  icons: { icon: "/brandrisk-logo.png", apple: "/brandrisk-logo.png" },
   openGraph: {
     title: "Brandrisk idag",
     description: "Se aktuell brandrisk och status för eldningsförbud på din plats i Sverige.",
