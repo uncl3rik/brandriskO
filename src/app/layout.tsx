@@ -7,15 +7,33 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://brandrisk.info"),
-  title: { default: "Brandrisk idag – Eldningsförbud och brandrisk", template: "%s | Brandrisk" },
+  title: { default: "Brandrisk idag", template: "%s | Brandrisk" },
   description: "Se aktuell brandrisk och status för eldningsförbud på din plats i Sverige.",
   applicationName: "Brandrisk",
   icons: { icon: "/brandrisk-logo.png", apple: "/brandrisk-logo.png" },
+  alternates: { canonical: "https://brandrisk.info" },
   openGraph: {
     title: "Brandrisk idag",
     description: "Se aktuell brandrisk och status för eldningsförbud på din plats i Sverige.",
+    url: "https://brandrisk.info",
+    siteName: "Brandrisk",
     locale: "sv_SE",
     type: "website",
+    images: [
+      {
+        url: "https://brandrisk.info/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Brandrisk idag",
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Brandrisk idag",
+    description: "Se aktuell brandrisk och status för eldningsförbud på din plats i Sverige.",
+    images: ["https://brandrisk.info/og.png"],
   },
 };
 
