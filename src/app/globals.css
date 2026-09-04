@@ -4,6 +4,7 @@
   --ink: #112820; --ink-soft: #355348; --forest-deep: #09271d;
   --cream: #f4f1e8; --paper: #fffef9; --line: #d8ded8; --signal: #f4d35e;
   --background: var(--cream); --foreground: var(--ink);
+  --header-stack-height: 126px;
 }
 @theme inline {
   --color-background: var(--background); --color-foreground: var(--foreground);
@@ -20,10 +21,15 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .brand { display: inline-flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-weight: 820; letter-spacing: .08em; font-size: .9rem; }
 .brand-logo { width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(17,40,32,.13)); }
 .authority-note { color: var(--ink-soft); font-size: .78rem; font-weight: 560; }
+.affiliation-bar { height: 54px; background: #fbfaf6; border-top: 1px solid #e1e5df; border-bottom: 1px solid #d7ddd6; }
+.affiliation-inner { height: 100%; width: min(1120px, calc(100% - 36px)); margin: 0 auto; display: flex; align-items: center; }
+.affiliation-link { width: fit-content; display: inline-flex; align-items: center; gap: 11px; color: #64766e; text-decoration: none; font-size: .78rem; font-weight: 560; transition: opacity .18s ease; }
+.affiliation-link:hover { opacity: .72; }
+.affiliation-logo { width: 158px; height: auto; display: block; }
 .hero { background: var(--forest-deep); color: white; position: relative; overflow: hidden; }
 .hero::after { content: ""; position: absolute; right: -110px; bottom: -160px; width: 420px; height: 420px; border: 1px solid rgba(255,255,255,.1); border-radius: 50%; box-shadow: 0 0 0 46px rgba(255,255,255,.025), 0 0 0 92px rgba(255,255,255,.02); pointer-events: none; }
 .hero-inner { width: min(760px, calc(100% - 36px)); margin: 0 auto; position: relative; z-index: 1; }
-.landing { min-height: calc(100svh - 72px); display: flex; flex-direction: column; justify-content: center; padding: 44px 0 86px; }
+.landing { min-height: calc(100svh - var(--header-stack-height)); display: flex; flex-direction: column; justify-content: center; padding: 44px 0 86px; }
 .eyebrow { font-size: .76rem; letter-spacing: .13em; text-transform: uppercase; font-weight: 720; color: #bcd0c7; margin: 0 0 17px; }
 .landing h1 { margin: 0; font-size: clamp(2.7rem, 11vw, 5.5rem); line-height: .96; letter-spacing: -.055em; max-width: 700px; font-weight: 760; }
 .intro { color: #d3e0da; font-size: clamp(1.05rem, 3vw, 1.3rem); line-height: 1.5; max-width: 510px; margin: 24px 0 34px; }
@@ -42,7 +48,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .search-submit:disabled { opacity: .55; cursor: not-allowed; }
 .privacy-line { margin: 18px 0 0; color: #9db2a8; font-size: .78rem; display: flex; align-items: center; gap: 8px; }
 .inline-error { background: #fff2ee; color: #85271f; border-left: 3px solid #df574b; padding: 13px 15px; border-radius: 8px; margin: 16px 0 0; line-height: 1.45; font-size: .9rem; }
-.loading-panel { min-height: calc(100svh - 72px); display: grid; place-items: center; padding: 60px 0; }
+.loading-panel { min-height: calc(100svh - var(--header-stack-height)); display: grid; place-items: center; padding: 60px 0; }
 .loading-card { width: 100%; max-width: 520px; text-align: center; }
 .spinner { width: 44px; height: 44px; border: 3px solid rgba(255,255,255,.18); border-top-color: var(--signal); border-radius: 50%; margin: 0 auto 23px; animation: spin .85s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -90,8 +96,12 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .site-footer { border-top: 1px solid #d7ddd6; width: min(920px, calc(100% - 36px)); margin: auto auto 0; padding: 22px 0 28px; color: #5c7167; display: flex; justify-content: space-between; gap: 20px; font-size: .76rem; }
 .site-footer a { color: inherit; text-underline-offset: 3px; }
 @media (max-width: 680px) {
+  :root { --header-stack-height: 116px; }
   .authority-note { display: none; } .site-header { height: 64px; }
-  .landing { min-height: calc(100svh - 64px); padding-top: 28px; }
+  .affiliation-bar { height: 52px; }
+  .affiliation-link { gap: 9px; }
+  .affiliation-logo { width: 142px; }
+  .landing { padding-top: 28px; }
   .result-hero { padding-top: 18px; } .place-row { margin-bottom: 33px; }
   .risk-grid { grid-template-columns: 118px 1fr; gap: 20px; } .risk-number { font-size: 6.8rem; } .risk-title { font-size: 1.5rem; } .risk-scale { margin-top: 18px; }
   .forecast-list { overflow-x: auto; grid-template-columns: repeat(5, minmax(120px, 1fr)); }
