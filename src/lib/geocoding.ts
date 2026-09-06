@@ -1,6 +1,7 @@
 import "server-only";
 import type { GeocodeResult } from "@/lib/types";
 import { placeKind, selectPlaces } from "@/lib/place-selection";
+import { coordinatedSearch, GeocodeUnavailable, normalizedQuery, redisCommand } from "@/lib/geocode-coordinator";
 
 const NOMINATIM = process.env.GEOCODING_BASE_URL || "https://nominatim.openstreetmap.org";
 let nextRequestAt = 0;
@@ -42,38 +43,33 @@ function normalize(item: NominatimItem): GeocodeResult {
 }
 
 export async function searchSwedishPlaces(query: string): Promise<GeocodeResult[]> {
-  const key = query.trim().toLocaleLowerCase("sv").replace(/\s+/g, " ");
+  const key = normalizedQuery(query);
   const cached = resultsCache.get(key);
   if (cached && cached.expires > Date.now()) return cached.results;
-  // A public Nominatim budget cannot be enforced across Vercel instances without
-  // a shared gateway. Production must point to a provider or rate-limited proxy.
-  if (process.env.VERCEL && NOMINATIM === "https://nominatim.openstreetmap.org") throw new Error("Configure production geocoder");
-  if (nextRequestAt > Date.now()) throw new Error("Geocoder busy");
-  nextRequestAt = Date.now() + 1100;
-  const params = new URLSearchParams({ q: query, format: "jsonv2", addressdetails: "1", countrycodes: "se", limit: "20", dedupe: "1" });
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+  const lookup = async () => {
+  const params = new URLSearchParams({ q: key, format: "jsonv2", addressdetails: "1", countrycodes: "se", limit: "20", dedupe: "1" });
   const response = await fetch(`${NOMINATIM}/search?${params}`, {
     headers: REQUEST_HEADERS,
-    next: { revalidate: 86400 },
+    cache: "no-store",
     signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) throw new Error("Geocoding failed");
   const items = (await response.json()) as NominatimItem[];
   const valid = items.filter((item) => Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lon)));
-  const results = selectPlaces(valid, query).map(normalize);
+  return selectPlaces(valid, key).map(normalize);
+  };
+  let results: GeocodeResult[];
+  if (redisUrl && redisToken) {
+    results = await coordinatedSearch(redisCommand(redisUrl, redisToken), `${NOMINATIM}:${key}`, lookup);
+  } else {
+    if (process.env.VERCEL && new URL(NOMINATIM).hostname === "nominatim.openstreetmap.org") throw new GeocodeUnavailable("configuration");
+    if (nextRequestAt > Date.now()) throw new GeocodeUnavailable("busy");
+    nextRequestAt = Date.now() + 30000;
+    try { results = await lookup(); } finally { nextRequestAt = Date.now() + 1100; }
+  }
   if (resultsCache.size >= 500) resultsCache.clear();
   resultsCache.set(key, { expires: Date.now() + 86400000, results });
   return results;
-}
-
-export async function reverseGeocode(latitude: number, longitude: number): Promise<GeocodeResult | null> {
-  const params = new URLSearchParams({ lat: String(latitude), lon: String(longitude), format: "jsonv2", addressdetails: "1", zoom: "12" });
-  try {
-    const response = await fetch(`${NOMINATIM}/reverse?${params}`, {
-      headers: REQUEST_HEADERS,
-      next: { revalidate: 86400 },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!response.ok) return null;
-    return normalize((await response.json()) as NominatimItem);
-  } catch { return null; }
 }

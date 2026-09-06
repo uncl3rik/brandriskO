@@ -48,8 +48,11 @@ export function BrandriskApp({ initialQuery, initialLocation }: { initialQuery?:
     setMode("loading"); setError(null); setLoadingText(`Söker efter ${query}…`);
     try {
       const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { signal: AbortSignal.timeout(12000) });
-      const body = await response.json() as { results?: GeocodeResult[]; error?: string };
-      if (!response.ok) throw new Error(body.error);
+      const body = await response.json() as { results?: GeocodeResult[]; error?: string; code?: string };
+      if (!response.ok) {
+        setError(body.code === "busy" ? "Söktjänsten är upptagen. Försök igen om några sekunder." : "Ortsökningen är tillfälligt ur drift. Använd din position eller försök senare.");
+        setMode("landing"); return;
+      }
       const place = body.results?.[0];
       if (!place) throw new Error("Vi hittade inte platsen. Prova ort, kommun eller postnummer.");
       if (body.results && body.results.length > 1) {

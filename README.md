@@ -36,6 +36,8 @@ pnpm start
 
 ## Miljövariabler
 
+**Uppdatering:** Befintliga Nominatim kan nu användas på Vercel med delad Redis-cache och gemensamt anropslås. Anslut `UPSTASH_REDIS_REST_URL` och `UPSTASH_REDIS_REST_TOKEN` (eller `KV_REST_API_URL` / `KV_REST_API_TOKEN`) enligt [driftguiden](docs/geocoding-production.md). Då behövs ingen alternativ `GEOCODING_BASE_URL`. Utan Redis eller konfigurerad proxy kvarstår driftspärren.
+
 Lokalt krävs inga miljövariabler. På Vercel krävs `GEOCODING_BASE_URL` till en Nominatim-kompatibel leverantör eller gemensam proxy som upprätthåller tjänstens användningsvillkor. Utan detta är ortsökningen avstängd på Vercel; GPS och redan koordinatsatta platslänkar fungerar fortfarande. Se `.env.example`. Ingen ny leverantör eller betaltjänst har anslutits.
 
 Den lokala begränsningen (ett anrop per 1,1 sekunder) gäller per serverprocess och ersätter inte en global kvot. Offentliga Nominatim tillåter högst ett anrop per sekund för hela appen: https://operations.osmfoundation.org/policies/nominatim/
