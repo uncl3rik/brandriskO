@@ -1,15 +1,17 @@
 import type { CSSProperties } from "react";
-import type { FireStatus, ProhibitionStatus } from "@/lib/types";
+import type { FireStatus, PlaceKind, ProhibitionStatus } from "@/lib/types";
 import { AlertIcon, CheckIcon, ExternalIcon, PinIcon } from "@/components/Icons";
 
 const COLORS = ["#a9b6af", "#9bd487", "#d1d86c", "#f0c35e", "#f09a45", "#e45e3f", "#d93b32"];
-const LEVELS = ["Mycket liten brandrisk", "Liten brandrisk", "Måttlig brandrisk", "Stor brandrisk", "Mycket stor brandrisk", "Extremt stor brandrisk"];
 const riskColor = (level: number | null) => COLORS[level ?? 0] ?? COLORS[0];
 const statusColor = (status: ProhibitionStatus) => status === "none" ? "#177a4c" : status === "unknown" ? "#687a72" : "#bf3b2f";
-const formatTime = (value: string) => new Intl.DateTimeFormat("sv-SE", { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
-const formatDay = (value: string, index: number) => index === 0 ? "Idag" : new Intl.DateTimeFormat("sv-SE", { weekday: "short" }).format(new Date(value)).replace(".", "");
+const formatTime = (value: string) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+const formatDay = (value: string) => value.slice(0, 10);
+// The API supplies forecast timestamps without an offset. Show the source time
+// literally instead of silently interpreting it in the visitor's timezone.
+const sourceTime = (value: string) => value.replace("T", " ").slice(0, 16);
 
-export function FireResult({ data, onReset }: { data: FireStatus; onReset: () => void }) {
+export function FireResult({ data, locationKind, onReset }: { data: FireStatus; locationKind: PlaceKind | "gps"; onReset: () => void }) {
   const level = data.risk.level;
   const color = riskColor(level);
   const status = data.prohibition.status;
@@ -19,13 +21,18 @@ export function FireResult({ data, onReset }: { data: FireStatus; onReset: () =>
     <section className="hero result-hero" aria-labelledby="result-place">
       <div className="hero-inner">
         <div className="place-row">
-          <div className="place-label"><PinIcon size={22} /><div><h1 id="result-place">{data.location.name}</h1>{area && <p>{area}</p>}</div></div>
+          <div className="place-label"><PinIcon size={22} /><div><h1 id="result-place">{data.location.name}</h1>{area && <p>{area}</p>}<p>{locationKind === "gps" ? "Gäller din GPS-position." : locationKind === "settlement" ? "Gäller ortens centrum, inte hela orten." : locationKind === "municipality" ? "Gäller kommunens sökpunkt, inte hela kommunen." : "Gäller den valda sökpunkten, inte hela området."}</p></div></div>
           <button className="change-button" type="button" onClick={onReset}>Byt plats</button>
         </div>
-        <div className="risk-grid" style={{ "--risk-color": color } as CSSProperties}>
+        <div className="answer-status" style={{ "--status-color": statusColor(status) } as CSSProperties}>
+          <span className="status-icon">{status === "none" ? <CheckIcon /> : <AlertIcon />}</span>
+          <h2>{data.prohibition.title}</h2>
+        </div>
+        {data.risk.description && <p className="current-advice">{data.risk.description}</p>}
+        <div className="risk-grid compact-risk" style={{ "--risk-color": color } as CSSProperties}>
           <div className={`risk-number ${level === null ? "no-data" : ""}`}>{level ?? "–"}</div>
           <div>
-            <p className="risk-kicker">Brandrisk idag</p>
+            <p className="risk-kicker">Sammanvägd brandrisk</p>
             <h2 className="risk-title">{data.risk.name}</h2>
             <div className="risk-scale" aria-label={level ? `Brandrisknivå ${level} av 6` : "Brandriskdata saknas"}>
               {[1, 2, 3, 4, 5, 6].map((step) => <span className={`scale-segment ${level !== null && step <= level ? "active" : ""}`} key={step} />)}
@@ -45,14 +52,17 @@ export function FireResult({ data, onReset }: { data: FireStatus; onReset: () =>
             {data.prohibition.sourceUrl && <a className="source-link" href={data.prohibition.sourceUrl} target="_blank" rel="noopener noreferrer">Se information från ansvarig myndighet <ExternalIcon /></a>}
           </div>
         </div>
-        <p className="checked">Senast kontrollerat: {formatTime(data.checkedAt)}{data.prohibition.authority ? ` · Källa för beslut: ${data.prohibition.authority}` : ""}</p>
+        <p className="checked">Förbudskontroll: {formatTime(data.checkedAt)} svensk tid{data.prohibition.authority ? ` · Källa för beslut: ${data.prohibition.authority}` : ""}</p>
+        {data.risk.issuedAt && <p className="checked">Prognos utfärdad: {sourceTime(data.risk.issuedAt)}. Prognosuppgifter kan vara cachade i upp till 10 minuter.</p>}
+        {data.risk.validFrom && data.risk.validTo && <p className="checked">Prognosperiod: {sourceTime(data.risk.validFrom)}–{sourceTime(data.risk.validTo)} (myndighetens tidsangivelser).</p>}
       </section>
 
       {data.forecast.length > 0 && <section className="section" aria-labelledby="forecast-heading">
         <div className="section-head"><h2 id="forecast-heading">De närmaste dagarna</h2><span className="section-tag">Prognos</span></div>
         <div className="forecast-list">
-          {data.forecast.slice(0, 5).map((day, index) => <div className="forecast-day" key={day.date} style={{ "--risk-color": riskColor(day.level) } as CSSProperties} title={day.description}>
-            <time dateTime={day.date}>{formatDay(day.date, index)}</time><div className="forecast-level">{day.level ?? "–"}</div><div className="forecast-name">{day.name.replace(" brandrisk", "")}</div>
+          {data.forecast.slice(0, 5).map((day) => <div className="forecast-day" key={day.date} style={{ "--risk-color": riskColor(day.level) } as CSSProperties}>
+            <time dateTime={day.date}>{formatDay(day.date)}</time><div className="forecast-level">{day.level ?? "–"}</div><div className="forecast-name">{day.name}</div>
+            {day.description && <details><summary>Myndighetens råd</summary><p>{day.description}</p></details>}
           </div>)}
         </div>
       </section>}
@@ -61,10 +71,6 @@ export function FireResult({ data, onReset }: { data: FireStatus; onReset: () =>
         <div><h2 id="meaning-heading">Vad betyder brandrisken?</h2></div>
         <div><p>Brandrisknivån beskriver hur lätt en brand kan starta och sprida sig i skog och mark. Den är en prognos och kan variera lokalt. Följ alltid rådet för den aktuella nivån.</p>{data.risk.description && <p className="mt-4 font-medium text-[var(--ink)]">{data.risk.description}</p>}</div>
       </section>
-
-      <div className="section level-key" aria-label="Brandrisknivåer">
-        {LEVELS.map((name, index) => <div className="level-row" key={name} style={{ "--risk-color": COLORS[index + 1] } as CSSProperties}><span className="level-dot">{index + 1}</span><span>{name}</span></div>)}
-      </div>
 
       <aside className="section safety" aria-labelledby="safety-heading">
         <h2 id="safety-heading">Kontrollera alltid innan du eldar</h2>

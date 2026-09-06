@@ -1,8 +1,9 @@
 import "server-only";
-import { reverseGeocode } from "@/lib/geocoding";
+import { normalizeLevel, normalizeProhibition, riskName, safeSourceUrl } from "@/lib/risk-normalization";
 import type { FireStatus, ForecastDay, ProhibitionStatus } from "@/lib/types";
 
 const API_BASE = "https://api.msb.se/brandrisk/v2";
+const cache = new Map<string, { expires: number; data: unknown }>();
 
 type RiskData = { date: string; issuedDate?: string; riskIndex: number; riskMessage?: string };
 type RiskLevelDefinition = { riskLevel: number; message?: string };
@@ -16,34 +17,23 @@ type FireProhibitionResponse = {
   };
 };
 
-const RISK_NAMES: Record<number, string> = {
-  1: "Mycket liten brandrisk", 2: "Liten brandrisk", 3: "Måttlig brandrisk",
-  4: "Stor brandrisk", 5: "Mycket stor brandrisk", 6: "Extremt stor brandrisk",
-};
-
-export function riskName(level: number | null) {
-  if (level === null || level <= 0) return "Data saknas / ej säsong";
-  return RISK_NAMES[level] ?? "Okänd brandrisk";
-}
-
-async function getJson<T>(path: string): Promise<T> {
+async function getJson<T>(path: string, precise = false): Promise<T> {
+  const cached = precise ? undefined : cache.get(path);
+  if (cached && cached.expires > Date.now()) return cached.data as T;
   const response = await fetch(`${API_BASE}${path}`, {
     headers: { Accept: "application/json" },
-    next: { revalidate: 600 },
+    cache: "no-store",
     signal: AbortSignal.timeout(9000),
   });
   if (!response.ok) throw new Error(`Brandrisk API returned ${response.status}`);
-  return response.json() as Promise<T>;
-}
-
-function normalizeLevel(level?: number) { return typeof level === "number" && level > 0 ? level : null; }
-
-function normalizeProhibition(raw?: string): ProhibitionStatus {
-  const value = raw?.toLocaleLowerCase("sv") ?? "";
-  if (value.includes("skärpt")) return "severe";
-  if (value.includes("inget") || value.includes("inte något") || value.includes("ej ")) return "none";
-  if (value.includes("eldningsförbud")) return "prohibited";
-  return "unknown";
+  const data: unknown = await response.json();
+  if (path.startsWith("/CurrentRisk") && (!data || typeof data !== "object" || !("forecast" in data))) throw new Error("Invalid risk response");
+  if ((path.startsWith("/RiskLevels") || path.startsWith("/RiskDailyForecast")) && !Array.isArray(data)) throw new Error("Invalid list response");
+  if (!precise) {
+    if (cache.size >= 500) cache.clear();
+    cache.set(path, { expires: Date.now() + 600000, data });
+  }
+  return data as T;
 }
 
 function prohibitionTitle(status: ProhibitionStatus) {
@@ -57,51 +47,53 @@ export async function getFireStatus(latitude: number, longitude: number, nameHin
   // Three decimals is roughly 110 metres and avoids caching precise personal coordinates.
   const lat = Number(latitude.toFixed(3));
   const lon = Number(longitude.toFixed(3));
-  const [riskResult, prohibitionResult, forecastResult, reverseResult, levelsResult] = await Promise.allSettled([
+  const [riskResult, prohibitionResult, forecastResult, levelsResult] = await Promise.allSettled([
     getJson<CurrentRiskResponse>(`/CurrentRisk/sv/${lat}/${lon}`),
-    getJson<FireProhibitionResponse>(`/FireProhibition/sv/${lat}/${lon}`),
+    getJson<FireProhibitionResponse>(`/FireProhibition/sv/${latitude}/${longitude}`, true),
     getJson<RiskData[]>(`/RiskDailyForecast/sv/${lat}/${lon}`),
-    nameHint ? Promise.resolve(null) : reverseGeocode(lat, lon),
     getJson<RiskLevelDefinition[]>("/RiskLevels/sv"),
   ]);
   if (riskResult.status === "rejected" && prohibitionResult.status === "rejected") throw new Error("Official status unavailable");
 
-  const current = riskResult.status === "fulfilled" ? riskResult.value : undefined;
+  const candidate = riskResult.status === "fulfilled" ? riskResult.value : undefined;
+  const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
+  const current = candidate?.periodEndDate?.slice(0, 10) === today ? candidate : undefined;
   const area = prohibitionResult.status === "fulfilled" ? prohibitionResult.value : undefined;
   const rawProhibition = area?.fireProhibition;
-  const prohibitionStatus = normalizeProhibition(rawProhibition?.status);
-  const reversed = reverseResult.status === "fulfilled" ? reverseResult.value : null;
+  const prohibitionStatus = normalizeProhibition(rawProhibition?.status, rawProhibition?.statusCode);
   const riskLevel = normalizeLevel(current?.forecast?.riskIndex);
   const officialLevel = levelsResult.status === "fulfilled"
     ? levelsResult.value.find((item) => item.riskLevel === (riskLevel ?? 0))
     : undefined;
   const forecast: ForecastDay[] = forecastResult.status === "fulfilled"
-    ? forecastResult.value.slice(0, 6).map((day) => {
+    ? forecastResult.value.filter((day) => day && typeof day.date === "string" && day.date.slice(0, 10) >= today).slice(0, 6).map((day) => {
         const level = normalizeLevel(day.riskIndex);
         return { date: day.date, level, name: riskName(level), description: day.riskMessage };
       }) : [];
 
   return {
     location: {
-      name: nameHint || reversed?.name || area?.county || "Din plats",
-      municipality: area?.county || reversed?.municipality,
-      county: area?.municipality || reversed?.county,
+      name: nameHint || area?.county || "Din plats",
+      // The live API has these English field names reversed.
+      municipality: area?.county,
+      county: area?.municipality,
       latitude: lat,
       longitude: lon,
     },
     risk: {
       level: riskLevel,
       name: riskName(riskLevel),
-      description: officialLevel?.message || current?.forecast?.riskMessage,
+      description: current?.forecast?.riskMessage || officialLevel?.message,
+      issuedAt: current?.forecast?.issuedDate,
       validFrom: current?.periodStartDate,
       validTo: current?.periodEndDate,
     },
     prohibition: {
       status: prohibitionStatus,
       title: prohibitionTitle(prohibitionStatus),
-      description: rawProhibition?.statusMessage || rawProhibition?.description,
+      description: prohibitionStatus === "unknown" ? "Uppgiften kunde inte bekräftas. Kontrollera aktuellt beslut hos kommunen eller länsstyrelsen." : rawProhibition?.statusMessage || rawProhibition?.description,
       authority: rawProhibition?.authority,
-      sourceUrl: rawProhibition?.url,
+      sourceUrl: safeSourceUrl(rawProhibition?.url),
       revisedAt: rawProhibition?.revisionDate,
     },
     forecast,

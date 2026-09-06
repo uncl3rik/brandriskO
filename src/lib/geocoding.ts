@@ -1,7 +1,10 @@
 import "server-only";
 import type { GeocodeResult } from "@/lib/types";
+import { placeKind, selectPlaces } from "@/lib/place-selection";
 
-const NOMINATIM = "https://nominatim.openstreetmap.org";
+const NOMINATIM = process.env.GEOCODING_BASE_URL || "https://nominatim.openstreetmap.org";
+let nextRequestAt = 0;
+const resultsCache = new Map<string, { expires: number; results: GeocodeResult[] }>();
 const REQUEST_HEADERS = {
   "User-Agent": "Brandrisk.info/1.0 (+https://brandrisk.info)",
   Accept: "application/json",
@@ -13,6 +16,8 @@ type NominatimItem = {
   lon: string;
   display_name: string;
   name?: string;
+  type?: string;
+  addresstype?: string;
   address?: Record<string, string>;
 };
 
@@ -32,11 +37,20 @@ function normalize(item: NominatimItem): GeocodeResult {
     latitude: Number(item.lat),
     longitude: Number(item.lon),
     slug: slugifyPlace(name),
+    kind: placeKind(item),
   };
 }
 
 export async function searchSwedishPlaces(query: string): Promise<GeocodeResult[]> {
-  const params = new URLSearchParams({ q: query, format: "jsonv2", addressdetails: "1", countrycodes: "se", limit: "5", dedupe: "1" });
+  const key = query.trim().toLocaleLowerCase("sv").replace(/\s+/g, " ");
+  const cached = resultsCache.get(key);
+  if (cached && cached.expires > Date.now()) return cached.results;
+  // A public Nominatim budget cannot be enforced across Vercel instances without
+  // a shared gateway. Production must point to a provider or rate-limited proxy.
+  if (process.env.VERCEL && NOMINATIM === "https://nominatim.openstreetmap.org") throw new Error("Configure production geocoder");
+  if (nextRequestAt > Date.now()) throw new Error("Geocoder busy");
+  nextRequestAt = Date.now() + 1100;
+  const params = new URLSearchParams({ q: query, format: "jsonv2", addressdetails: "1", countrycodes: "se", limit: "20", dedupe: "1" });
   const response = await fetch(`${NOMINATIM}/search?${params}`, {
     headers: REQUEST_HEADERS,
     next: { revalidate: 86400 },
@@ -44,7 +58,11 @@ export async function searchSwedishPlaces(query: string): Promise<GeocodeResult[
   });
   if (!response.ok) throw new Error("Geocoding failed");
   const items = (await response.json()) as NominatimItem[];
-  return items.map(normalize).filter((item) => Number.isFinite(item.latitude) && Number.isFinite(item.longitude));
+  const valid = items.filter((item) => Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lon)));
+  const results = selectPlaces(valid, query).map(normalize);
+  if (resultsCache.size >= 500) resultsCache.clear();
+  resultsCache.set(key, { expires: Date.now() + 86400000, results });
+  return results;
 }
 
 export async function reverseGeocode(latitude: number, longitude: number): Promise<GeocodeResult | null> {

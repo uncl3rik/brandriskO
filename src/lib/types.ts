@@ -17,7 +17,7 @@ export type ForecastDay = {
 
 export type FireStatus = {
   location: LocationDetails;
-  risk: { level: number | null; name: string; description?: string; validFrom?: string; validTo?: string };
+  risk: { level: number | null; name: string; description?: string; validFrom?: string; validTo?: string; issuedAt?: string };
   prohibition: {
     status: ProhibitionStatus;
     title: string;
@@ -30,4 +30,5 @@ export type FireStatus = {
   checkedAt: string;
 };
 
-export type GeocodeResult = LocationDetails & { displayName: string; slug: string };
+export type PlaceKind = "settlement" | "municipality" | "other";
+export type GeocodeResult = LocationDetails & { displayName: string; slug: string; kind: PlaceKind };
