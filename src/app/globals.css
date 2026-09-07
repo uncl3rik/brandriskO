@@ -25,7 +25,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .affiliation-inner { height: 100%; width: min(1120px, calc(100% - 36px)); margin: 0 auto; display: flex; align-items: center; }
 .affiliation-link { width: fit-content; display: inline-flex; align-items: center; gap: 11px; color: #64766e; text-decoration: none; font-size: .78rem; font-weight: 560; transition: opacity .18s ease; }
 .affiliation-link:hover { opacity: .72; }
-.affiliation-logo { width: 158px; height: auto; display: block; }
+.affiliation-mark { position: relative; overflow: hidden; width: 25px; height: 34px; flex: 0 0 25px; }
+.affiliation-mark img { position: absolute; width: 217px; max-width: none; height: auto; left: -12px; top: -16px; }
+.affiliation-name { color: var(--ink); font-size: .9rem; line-height: 1.2; }
 .hero { background: var(--forest-deep); color: white; position: relative; overflow: hidden; }
 .answer-status { display: flex; align-items: center; gap: 12px; }
 .answer-status h2 { font-size: clamp(1.35rem, 4vw, 2rem); line-height: 1.2; margin: 0; }
@@ -116,7 +118,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .authority-note { display: none; } .site-header { height: 64px; }
   .affiliation-bar { height: 52px; }
   .affiliation-link { gap: 9px; }
-  .affiliation-logo { width: 142px; }
+  .affiliation-name { font-size: .82rem; }
   .landing { padding-top: 28px; }
   .result-hero { padding-top: 18px; } .place-row { margin-bottom: 33px; }
   .risk-grid { grid-template-columns: 118px 1fr; gap: 20px; } .risk-number { font-size: 6.8rem; } .risk-title { font-size: 1.5rem; } .risk-scale { margin-top: 18px; }
