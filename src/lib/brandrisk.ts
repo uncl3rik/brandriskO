@@ -1,5 +1,5 @@
 import "server-only";
-import { normalizeLevel, normalizeProhibition, riskName, safeSourceUrl } from "@/lib/risk-normalization";
+import { normalizeLevel, normalizeProhibition, periodOverlapsDay, riskName, safeSourceUrl } from "@/lib/risk-normalization";
 import type { FireStatus, ForecastDay, ProhibitionStatus } from "@/lib/types";
 
 const API_BASE = "https://api.msb.se/brandrisk/v2";
@@ -48,7 +48,7 @@ export async function getFireStatus(latitude: number, longitude: number, nameHin
   const lat = Number(latitude.toFixed(3));
   const lon = Number(longitude.toFixed(3));
   const [riskResult, prohibitionResult, forecastResult, levelsResult] = await Promise.allSettled([
-    getJson<CurrentRiskResponse>(`/CurrentRisk/sv/${lat}/${lon}`),
+    getJson<CurrentRiskResponse>(`/CurrentRisk/sv/${lat}/${lon}`, true),
     getJson<FireProhibitionResponse>(`/FireProhibition/sv/${latitude}/${longitude}`, true),
     getJson<RiskData[]>(`/RiskDailyForecast/sv/${lat}/${lon}`),
     getJson<RiskLevelDefinition[]>("/RiskLevels/sv"),
@@ -57,13 +57,13 @@ export async function getFireStatus(latitude: number, longitude: number, nameHin
 
   const candidate = riskResult.status === "fulfilled" ? riskResult.value : undefined;
   const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm" }).format(new Date());
-  const current = candidate?.periodEndDate?.slice(0, 10) === today ? candidate : undefined;
+  const current = periodOverlapsDay(candidate?.periodStartDate, candidate?.periodEndDate, today) ? candidate : undefined;
   const area = prohibitionResult.status === "fulfilled" ? prohibitionResult.value : undefined;
   const rawProhibition = area?.fireProhibition;
   const prohibitionStatus = normalizeProhibition(rawProhibition?.status, rawProhibition?.statusCode);
   const riskLevel = normalizeLevel(current?.forecast?.riskIndex);
   const officialLevel = levelsResult.status === "fulfilled"
-    ? levelsResult.value.find((item) => item.riskLevel === (riskLevel ?? 0))
+    ? levelsResult.value.find((item) => item.riskLevel === riskLevel)
     : undefined;
   const forecast: ForecastDay[] = forecastResult.status === "fulfilled"
     ? forecastResult.value.filter((day) => day && typeof day.date === "string" && day.date.slice(0, 10) >= today).slice(0, 6).map((day) => {
@@ -83,7 +83,11 @@ export async function getFireStatus(latitude: number, longitude: number, nameHin
     risk: {
       level: riskLevel,
       name: riskName(riskLevel),
-      description: current?.forecast?.riskMessage || officialLevel?.message,
+      description: current?.forecast?.riskMessage || officialLevel?.message || (riskResult.status === "rejected"
+        ? "Den aktuella riskprognosen kunde inte hämtas från myndigheten. Försök igen senare. Förbudsstatus kontrolleras separat."
+        : candidate && !current
+          ? "Myndighetens prognosperiod kunde inte bekräftas för idag. Därför visas ingen aktuell risknivå. Förbudsstatus kontrolleras separat."
+          : "Myndigheten saknar en användbar risknivå för platsen just nu. Förbudsstatus kontrolleras separat."),
       issuedAt: current?.forecast?.issuedDate,
       validFrom: current?.periodStartDate,
       validTo: current?.periodEndDate,

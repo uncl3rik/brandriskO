@@ -6,6 +6,18 @@ export function riskName(level: number | null) {
   return level === null ? "Brandriskdata saknas" : `Sammanvägd nivå ${level}`;
 }
 
+// Source timestamps have no documented offset. Check calendar-day overlap,
+// not browser-local parsing. An end at midnight belongs to the preceding day.
+export function periodOverlapsDay(start: unknown, end: unknown, day: string): boolean {
+  if (typeof start !== "string" || typeof end !== "string") return false;
+  const pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
+  if (!pattern.test(start) || !pattern.test(end) || start >= end) return false;
+  const startDay = start.slice(0, 10);
+  const endDay = end.slice(0, 10);
+  const endsAtMidnight = /^00:00:00(?:\.0+)?$/.test(end.slice(11));
+  return startDay <= day && (day < endDay || (day === endDay && !endsAtMidnight));
+}
+
 // Swagger lists numeric values but does not document their meanings. Only the
 // observed code/text pair for absence is accepted; unknown wording fails closed.
 export function normalizeProhibition(raw: unknown, code: unknown): "none" | "prohibited" | "severe" | "unknown" {
