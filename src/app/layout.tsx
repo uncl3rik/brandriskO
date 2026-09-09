@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -10,7 +12,6 @@ export const metadata: Metadata = {
   title: { default: "Brandrisk idag", template: "%s | Brandrisk" },
   description: "Se aktuell brandrisk och status för eldningsförbud på din plats i Sverige.",
   applicationName: "Brandrisk",
-  alternates: { canonical: "https://brandrisk.info" },
   openGraph: {
     title: "Brandrisk idag",
     description: "Se aktuell brandrisk och status för eldningsförbud på din plats i Sverige.",
@@ -37,5 +38,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="sv" className={`${geist.variable} ${geistMono.variable}`}><body>{children}</body></html>;
+  return <html lang="sv" className={`${geist.variable} ${geistMono.variable}`}><body>
+    <a className="skip-link" href="#main-content">Hoppa till innehållet</a>
+    <div className="site-shell"><SiteHeader />{children}<SiteFooter /></div>
+  </body></html>;
 }

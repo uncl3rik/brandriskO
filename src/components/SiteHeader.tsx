@@ -10,14 +10,13 @@ export function SiteHeader() {
       </Link>
       <span className="authority-note">Myndighetsdata · uppdateras löpande</span>
     </header>
-    <div className="affiliation-bar">
-      <div className="affiliation-inner">
-        <a className="affiliation-link" href="https://stockholmvedspisar.shop" target="_blank" rel="noopener noreferrer">
-          <span>en del av</span>
-          <span className="affiliation-mark" aria-hidden="true"><Image src="/taby-eldstader-logo.png" alt="" width={2172} height={724} /></span>
-          <strong className="affiliation-name">Stockholm Vedspisar</strong>
-        </a>
+    <nav className="site-nav" aria-label="Huvudnavigation">
+      <div className="site-nav-inner">
+        <Link href="/">Kontrollera plats</Link>
+        <Link href="/eldningsforbud">Eldningsförbud</Link>
+        <Link href="/brandrisknivaer">Brandrisknivåer</Link>
+        <Link href="/om">Om tjänsten</Link>
       </div>
-    </div>
+    </nav>
   </>;
 }

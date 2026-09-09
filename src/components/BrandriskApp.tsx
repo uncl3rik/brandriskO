@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FireResult } from "@/components/FireResult";
 import { LocationSearch } from "@/components/LocationSearch";
-import { SiteHeader } from "@/components/SiteHeader";
 import type { FireStatus, GeocodeResult, PlaceKind } from "@/lib/types";
 
 type Mode = "landing" | "loading" | "result";
 
 type SelectedLocation = { latitude: number; longitude: number; name?: string; kind?: PlaceKind };
 
-export function BrandriskApp({ initialQuery, initialLocation }: { initialQuery?: string; initialLocation?: SelectedLocation }) {
+export function BrandriskApp({ initialQuery, initialLocation, children }: { initialQuery?: string; initialLocation?: SelectedLocation; children?: ReactNode }) {
   const [mode, setMode] = useState<Mode>(initialQuery ? "loading" : "landing");
   const [status, setStatus] = useState<FireStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,8 +104,7 @@ export function BrandriskApp({ initialQuery, initialLocation }: { initialQuery?:
     if (window.location.pathname !== "/") window.history.pushState({}, "", "/");
   }
 
-  return <div className="site-shell">
-    <SiteHeader />
+  return <main id="main-content">
     {mode === "landing" && <section className="hero"><div className="hero-inner landing">
       <p className="eyebrow">Brandrisk och eldningsförbud</p><h1>Kan jag elda här idag?</h1>
       <p className="intro">Se aktuell brandrisk och registrerade eldningsförbud där du befinner dig.</p>
@@ -117,6 +115,6 @@ export function BrandriskApp({ initialQuery, initialLocation }: { initialQuery?:
     </div></section>}
     {mode === "loading" && <section className="hero"><div className="hero-inner loading-panel"><div className="loading-card" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" /><h1>{loadingText}</h1><p>Vi kontrollerar svenska myndigheters aktuella data.</p></div></div></section>}
     {mode === "result" && status && <FireResult data={status} locationKind={resultKind} onReset={reset} />}
-    <footer className="site-footer"><span>Data från Myndigheten för civilt försvar. Byggt av KEZAB</span><a href="https://www.mcf.se/sv/om-oss/kommunikationskanaler/appar/brandrisk-ute/" target="_blank" rel="noopener noreferrer">Om Brandrisk Ute hos myndigheten</a></footer>
-  </div>;
+    {children}
+  </main>;
 }

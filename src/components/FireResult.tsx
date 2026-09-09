@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import type { FireStatus, PlaceKind, ProhibitionStatus } from "@/lib/types";
 import { AlertIcon, CheckIcon, ExternalIcon, PinIcon } from "@/components/Icons";
 
@@ -42,13 +43,14 @@ export function FireResult({ data, locationKind, onReset }: { data: FireStatus; 
       </div>
     </section>
 
-    <main className="content">
+    <div className="content">
       <section aria-labelledby="prohibition-heading">
         <div className="prohibition-card" style={{ "--status-color": statusColor(status) } as CSSProperties}>
           <div className="status-icon">{status === "none" ? <CheckIcon /> : <AlertIcon />}</div>
           <div>
             <h2 id="prohibition-heading">{data.prohibition.title}</h2>
             <p>{data.prohibition.description || "Kontrollera alltid lokala beslut innan du eldar eller grillar utomhus."}</p>
+            <Link className="source-link" href="/eldningsforbud">Så tolkar du status för eldningsförbud</Link>
             {data.prohibition.sourceUrl && <a className="source-link" href={data.prohibition.sourceUrl} target="_blank" rel="noopener noreferrer">Se information från ansvarig myndighet <ExternalIcon /></a>}
           </div>
         </div>
@@ -69,13 +71,13 @@ export function FireResult({ data, locationKind, onReset }: { data: FireStatus; 
 
       <section className="section explain-grid" aria-labelledby="meaning-heading">
         <div><h2 id="meaning-heading">Vad betyder brandrisken?</h2></div>
-        <div><p>Brandrisknivån beskriver hur lätt en brand kan starta och sprida sig i skog och mark. Den är en prognos och kan variera lokalt. Följ alltid rådet för den aktuella nivån.</p>{data.risk.description && <p className="mt-4 font-medium text-[var(--ink)]">{data.risk.description}</p>}</div>
+        <div><p>Brandrisknivån beskriver hur lätt en brand kan starta och sprida sig i skog och mark. Den är en prognos och kan variera lokalt. Följ alltid rådet för den aktuella nivån.</p>{data.risk.description && <p className="mt-4 font-medium text-[var(--ink)]">{data.risk.description}</p>}<Link className="source-link" href="/brandrisknivaer">Läs om brandrisknivåerna och prognosen</Link></div>
       </section>
 
       <aside className="section safety" aria-labelledby="safety-heading">
         <h2 id="safety-heading">Kontrollera alltid innan du eldar</h2>
         <p>Inget registrerat förbud är inte samma sak som ett generellt tillstånd att elda. Lokala regler, tillfälliga beslut och eget ansvar gäller fortfarande. Informationen kommer från Brandrisk Ute och ersätter inte ansvarig myndighets beslut.</p>
       </aside>
-    </main>
+    </div>
   </>;
 }
