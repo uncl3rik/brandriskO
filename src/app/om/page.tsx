@@ -17,6 +17,11 @@ export default function Page() {
       <p>Orts- och postnummersökningen använder OpenStreetMap-data genom en Nominatim-kompatibel söktjänst. <a href="https://www.openstreetmap.org/copyright">© OpenStreetMaps bidragsgivare</a>. Vid flera sökträffar får du välja vilken plats du menar.</p>
     </section>
     <section>
+      <h2>Väder för den valda platsen</h2>
+      <p>Temperatur, relativ luftfuktighet och vind hämtas separat från <a href="https://opendata.smhi.se/metfcst/snow1gv1/">SMHI:s väderprognos SNOW</a>. Positionen avrundas till två decimaler innan den skickas till SMHI. Resultatet gäller närmaste prognospunkt, inte hela kommunen. Prognosvärden väljs ut och avrundas för visning enligt <a href="https://www.smhi.se/data/om-smhis-data/villkor-for-anvandning">SMHI:s villkor, CC BY 4.0</a>.</p>
+      <p>Väderrutan visar närmaste kommande prognostid inom tre timmar och kan återanvända källdata i upp till tio minuter. Luftfuktighet är inte ett mått på markens torrhet. Om väderuppgifter saknas påverkar det inte kontrollen av brandrisk och eldningsförbud.</p>
+    </section>
+    <section>
       <h2>Hur aktuella är resultaten?</h2>
       <p>Aktuell risk och förbudsstatus hämtas på nytt när en plats kontrolleras. Dagsprognoser och nivåbeskrivningar kan återanvändas i upp till tio minuter. Ett öppet resultat uppdateras efter fem minuter när fliken är synlig.</p>
       <p>Kontrolltiden anger när tjänsten hämtade uppgifterna. Prognosens utfärdandetid och period visas separat när de finns. En ny kontroll innebär inte att myndigheten har utfärdat en ny prognos.</p>

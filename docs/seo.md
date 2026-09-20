@@ -1,5 +1,18 @@
 # SEO-struktur, första etappen
 
+## Uppdatering 2026-09-20: lokal Stockholmspilot
+
+Efter användarens godkännande har `/eldningsforbud/stockholm` lagts till som femte indexerbar sida. Den avser vägledning för Stockholms kommun, med tydlig skillnad mot Stockholms län och verktygets sökpunkt. Tidigare uppgifter nedan om fyra sidor beskriver första etappen.
+
+- Sidan har egen titel, beskrivning, canonical, delningsmetadata och en brödsmulelänk till förbudsguiden. Den finns i sitemap och länkas från startsidan och förbudsguiden.
+- Lokala källor: Länsstyrelsen Stockholms sida om eldningsförbud, Stockholms stads sida om brandskydd i hemmet samt Storstockholms brandförsvars sida om eldningsförbud. Källor granskade 2026-09-20.
+- Inget kommunövergripande livebesked publiceras. Befintligt API ger ett punktsvar; täckningen för hela kommunen är inte verifierad. Källornas tillfälliga besked kopieras inte in i statisk text.
+- Guiden förklarar lokala avrådanden som verktyget inte har en egen status för. Den hänvisar till aktuella originalbesked och till platskontrollen.
+- Sökämnet ”eldningsförbud Stockholm” är fortsatt en hypotes utan verifierad sökvolym. Efter publicering: inspektera URL:en i Search Console och följ sökfrågor, exponeringar och klick innan fler orter prioriteras.
+- Ingen Vercel-publicering eller installation av analysverktyg har utförts. Delningssidorna behåller noindex.
+
+## Ursprunglig etapp
+
 Implementerad 2026-09-09. Sökämnena är hypoteser utifrån tjänstens funktion, inte validerade sökvolymer.
 
 ## Sidor och ansvar
@@ -20,7 +33,7 @@ Sidmetadata skapas via `src/lib/seo.ts`. Varje indexerbar sida ska få egen cano
 
 Guiderna hänvisar till Myndigheten för civilt försvars sidor om Brandrisk Ute och eldningsförbud. Granskningsdatum avser källkontroll, inte liveuppgifternas aktualitet. Vid ändrade regler eller ändrat API ska texterna granskas på nytt. Ge aldrig ett generellt tillstånd att elda utifrån avsaknad av registrerat förbud.
 
-Stockholm Vedspisars koppling, logotypvisning och länk har tagits bort ur sidhuvudet på användarens begäran. Bildfilen ligger kvar som oanvänd tillgång. Ingen affärskonvertering till butiken har införts.
+Stockholm Vedspisars koppling, logotypvisning och länk har tagits bort ur sidhuvudet på användarens begäran. Den oanvända bildfilen har också tagits bort. Ingen affärskonvertering till butiken har införts.
 
 ## Kontrollerat lokalt
 

@@ -106,7 +106,7 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
 
   return <main id="main-content">
     {mode === "landing" && <section className="hero"><div className="hero-inner landing">
-      <p className="eyebrow">Brandrisk och eldningsförbud</p><h1>Kan jag elda här idag?</h1>
+      <p className="eyebrow">Brandrisk och eldningsförbud idag</p><h1>Kan jag elda här idag?</h1>
       <p className="intro">Se aktuell brandrisk och registrerade eldningsförbud där du befinner dig.</p>
       <LocationSearch busy={false} onLocate={locate} onSearch={search} />
       <p className="checked">Ortsökning: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></p>

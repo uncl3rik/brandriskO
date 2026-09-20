@@ -3,7 +3,7 @@ import { HomeIntro } from "@/components/HomeIntro";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata(
-  "Brandrisk idag – kontrollera brandrisk och eldningsförbud",
+  "Brandrisk och eldningsförbud idag – kolla din plats",
   "Kontrollera aktuell brandrisk och registrerade eldningsförbud på din plats i Sverige. Sök ort eller postnummer och se tillgänglig prognos.",
   "/",
 );

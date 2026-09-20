@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { WeatherCard } from "@/components/WeatherCard";
 import type { FireStatus, PlaceKind, ProhibitionStatus } from "@/lib/types";
 import { AlertIcon, CheckIcon, ExternalIcon, PinIcon } from "@/components/Icons";
 
@@ -58,6 +59,8 @@ export function FireResult({ data, locationKind, onReset }: { data: FireStatus; 
         {data.risk.issuedAt && <p className="checked">Prognos utfärdad: {sourceTime(data.risk.issuedAt)}. Prognosuppgifter kan vara cachade i upp till 10 minuter.</p>}
         {data.risk.validFrom && data.risk.validTo && <p className="checked">Prognosperiod: {sourceTime(data.risk.validFrom)}–{sourceTime(data.risk.validTo)} (myndighetens tidsangivelser).</p>}
       </section>
+
+      <WeatherCard key={`${data.location.latitude}:${data.location.longitude}:${data.checkedAt}`} latitude={data.location.latitude} longitude={data.location.longitude} />
 
       {data.forecast.length > 0 && <section className="section" aria-labelledby="forecast-heading">
         <div className="section-head"><h2 id="forecast-heading">De närmaste dagarna</h2><span className="section-tag">Prognos</span></div>

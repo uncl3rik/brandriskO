@@ -6,7 +6,7 @@ export const PROHIBITION_SOURCE = "https://www.mcf.se/sv/rad-till-privatpersoner
 
 export function pageMetadata(title: string, description: string, path: string): Metadata {
   const url = new URL(path, SITE_URL).href;
-  const images = [{ url: `${SITE_URL}/og.png`, width: 1200, height: 630, alt: "Brandrisk idag" }];
+  const images = [{ url: `${SITE_URL}/og.png?v=2`, width: 1200, height: 630, alt: "Brandrisk idag" }];
   return {
     title,
     description,

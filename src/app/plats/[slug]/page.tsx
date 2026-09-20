@@ -17,7 +17,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const description = `Se aktuell brandrisk och status för eldningsförbud i ${place}.`;
   const url = new URL(`/plats/${encodeURIComponent(slug)}`, "https://brandrisk.info");
   for (const key of ["name", "lat", "lon", "kind"]) if (typeof search[key] === "string") url.searchParams.set(key, search[key]);
-  const images = [{ url: "https://brandrisk.info/og.png", width: 1200, height: 630, alt: "Brandrisk idag" }];
+  const images = [{ url: "https://brandrisk.info/og.png?v=2", width: 1200, height: 630, alt: "Brandrisk idag" }];
   return { title, description, robots: { index: false, follow: true }, alternates: { canonical: null }, openGraph: { title, description, url, images }, twitter: { card: "summary_large_image", title, description, images } };
 }
 

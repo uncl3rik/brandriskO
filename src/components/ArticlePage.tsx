@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export function ArticlePage({ title, intro, children }: { title: string; intro: string; children: ReactNode }) {
+export function ArticlePage({ title, intro, children, parent, actionLabel = "Kontrollera brandrisken på din plats →" }: { title: string; intro: string; children: ReactNode; parent?: { href: string; label: string }; actionLabel?: string }) {
   return <main id="main-content" className="article-page">
     <div className="article-header">
-      <nav className="breadcrumbs" aria-label="Brödsmulor"><Link href="/">Start</Link><span aria-hidden="true"> / </span><span aria-current="page">{title}</span></nav>
+      <nav className="breadcrumbs" aria-label="Brödsmulor"><Link href="/">Start</Link><span aria-hidden="true"> / </span>{parent && <><Link href={parent.href}>{parent.label}</Link><span aria-hidden="true"> / </span></>}<span aria-current="page">{title}</span></nav>
       <p className="article-kicker">Brandrisk.info · Kunskap och vägledning</p>
       <h1>{title}</h1>
       <p className="article-intro">{intro}</p>
-      <Link className="article-cta" href="/">Kontrollera brandrisken på din plats →</Link>
+      <Link className="article-cta" href="/">{actionLabel}</Link>
     </div>
     <article className="article-body" aria-label={title}>
       {children}

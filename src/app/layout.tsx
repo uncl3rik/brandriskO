@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://brandrisk.info/og.png",
+        url: "https://brandrisk.info/og.png?v=2",
         width: 1200,
         height: 630,
         alt: "Brandrisk idag",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Brandrisk idag",
     description: "Se aktuell brandrisk och status för eldningsförbud på din plats i Sverige.",
-    images: ["https://brandrisk.info/og.png"],
+    images: ["https://brandrisk.info/og.png?v=2"],
   },
 };
 

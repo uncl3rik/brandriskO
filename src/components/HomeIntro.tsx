@@ -10,7 +10,7 @@ export function HomeIntro() {
     </section>
     <div className="guide-grid">
       <section className="guide-card">
-        <h2>Finns det ett eldningsförbud?</h2>
+        <h2>Är det eldningsförbud idag?</h2>
         <p>Förbudsstatus och brandrisk är olika uppgifter. Läs det lokala beslutet för att se vilka områden och aktiviteter som omfattas.</p>
         <Link href="/eldningsforbud">Förstå eldningsförbudet →</Link>
       </section>
@@ -20,6 +20,16 @@ export function HomeIntro() {
         <Link href="/brandrisknivaer">Förstå brandrisknivåerna →</Link>
       </section>
     </div>
+    <section className="section" aria-labelledby="grilling-heading">
+      <h2 id="grilling-heading">Får jag grilla idag?</h2>
+      <p>Börja med att kontrollera din plats i verktyget ovan. Läs sedan det lokala beslutet: förutsättningarna kan skilja sig mellan en egen tomt och en grillplats i naturen.</p>
+      <p><Link className="source-link" href="/eldningsforbud#grilla">Läs om grillning vid eldningsförbud</Link>, <Link className="source-link" href="/eldningsforbud#egen-tomt">grillning på egen tomt</Link> och <Link className="source-link" href="/eldningsforbud#friluftskok">gasolgrill och stormkök</Link>.</p>
+    </section>
+    <section className="section" aria-labelledby="stockholm-heading">
+      <h2 id="stockholm-heading">Eldningsförbud i Stockholm</h2>
+      <p>Hitta rätt lokala besked inför eldning och grillning i Stockholms kommun. Guiden skiljer mellan kommunen, länet och den punkt du kontrollerar.</p>
+      <p><Link className="source-link" href="/eldningsforbud/stockholm">Se lokala källor och vägledning för Stockholm →</Link></p>
+    </section>
     <section className="safety" aria-labelledby="home-safety">
       <h2 id="home-safety">Inget registrerat förbud är inget generellt tillstånd</h2>
       <p>Kontrollera aktuella beslut hos kommunen eller länsstyrelsen innan du eldar. Om uppgifter saknas visar tjänsten det, i stället för att ange att risken är låg eller att eldning är tillåten.</p>
