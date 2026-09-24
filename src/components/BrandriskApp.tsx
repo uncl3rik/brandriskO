@@ -18,6 +18,12 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   const [resultKind, setResultKind] = useState<PlaceKind | "gps">("other");
   const selected = useRef<SelectedLocation | null>(null);
   const requestId = useRef(0);
+  const positionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearPositionTimer() {
+    if (positionTimer.current !== null) clearTimeout(positionTimer.current);
+    positionTimer.current = null;
+  }
 
   async function loadStatus(location: SelectedLocation, share = false) {
     const id = ++requestId.current;
@@ -44,10 +50,12 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   }
 
   async function search(query: string, updateUrl = true) {
+    const id = ++requestId.current;
     setMode("loading"); setError(null); setLoadingText(`Söker efter ${query}…`);
     try {
       const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { signal: AbortSignal.timeout(12000) });
       const body = await response.json() as { results?: GeocodeResult[]; error?: string; code?: string };
+      if (id !== requestId.current) return;
       if (!response.ok) {
         setError(body.code === "busy" ? "Söktjänsten är upptagen. Försök igen om några sekunder." : "Ortsökningen är tillfälligt ur drift. Använd din position eller försök senare.");
         setMode("landing"); return;
@@ -59,6 +67,7 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
       }
       await loadStatus(place, updateUrl);
     } catch (reason) {
+      if (id !== requestId.current) return;
       const message = reason instanceof Error && reason.message.startsWith("Vi hittade inte") ? reason.message : "Platssökningen kunde inte användas just nu. Försök igen om en stund.";
       setError(message); setMode("landing");
     }
@@ -67,17 +76,43 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   function locate() {
     window.history.replaceState({}, "", "/");
     setError(null);
+    setMatches([]);
+    if (!window.isSecureContext) {
+      setError("Platsåtkomst kräver en säker anslutning. Öppna https://www.brandrisk.info i mobilens webbläsare eller sök efter ort eller postnummer här.");
+      return;
+    }
     if (!("geolocation" in navigator)) { setError("Din webbläsare kan inte hämta positionen. Sök efter din ort istället."); return; }
-    setMode("loading"); setLoadingText("Hämtar brandrisk för din plats…");
-    navigator.geolocation.getCurrentPosition(
-      (position) => void loadStatus({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
-      (positionError) => {
-        const messages: Record<number, string> = { 1: "Vi fick inte tillgång till din position. Sök efter din ort istället.", 2: "Din position kunde inte fastställas. Sök efter din ort istället.", 3: "Det tog för lång tid att hitta din position. Försök igen eller sök efter din ort." };
-        setError(messages[positionError.code] || "Positionen kunde inte hämtas. Sök efter din ort istället."); setMode("landing");
-      },
-      { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 },
-    );
+    const id = ++requestId.current;
+    clearPositionTimer();
+    setMode("loading"); setLoadingText("Hämtar din position…");
+    function fail(code: number) {
+      if (id !== requestId.current) return;
+      clearPositionTimer();
+      requestId.current++;
+      const messages: Record<number, string> = {
+        1: "Platsåtkomst är blockerad. Tillåt plats för den här webbplatsen i webbläsarens inställningar och kontrollera att platstjänster är på i telefonen. Om sidan öppnats inuti en annan app, prova Safari eller Chrome. Du kan också söka efter ort eller postnummer.",
+        2: "Telefonen kunde inte fastställa din position. Kontrollera att platstjänster är på och försök igen, eller sök efter ort eller postnummer.",
+        3: "Det tog för lång tid att hitta din position. Godkänn platsförfrågan om den visas och försök igen, eller sök efter ort eller postnummer.",
+      };
+      setError(messages[code] || "Positionen kunde inte hämtas. Sök efter ort eller postnummer istället.");
+      setMode("landing");
+    }
+    // Some browsers do not count time spent waiting for permission in their timeout.
+    positionTimer.current = setTimeout(() => fail(3), 30000);
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (id !== requestId.current) return;
+          clearPositionTimer();
+          void loadStatus({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        },
+        (positionError) => fail(positionError.code),
+        { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 },
+      );
+    } catch { fail(1); }
   }
+
+  useEffect(() => () => { requestId.current++; clearPositionTimer(); }, []);
 
   useEffect(() => {
     // Loading the slug is the intended one-time side effect of a shareable place route.
@@ -99,6 +134,7 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   }, [mode, status]);
 
   function reset() {
+    clearPositionTimer();
     requestId.current++; selected.current = null; setMatches([]);
     setStatus(null); setError(null); setMode("landing");
     if (window.location.pathname !== "/") window.history.pushState({}, "", "/");
@@ -113,7 +149,7 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
       {matches.length > 0 && <div className="place-options"><h2>Välj plats</h2><ul>{matches.map((place, index) => <li key={`${place.slug}-${index}`}><button type="button" onClick={() => void loadStatus(place, true)}><strong>{place.name}</strong><span>{place.displayName}</span></button></li>)}</ul></div>}
       {error && <div className="inline-error" role="alert">{error}</div>}
     </div></section>}
-    {mode === "loading" && <section className="hero"><div className="hero-inner loading-panel"><div className="loading-card" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" /><h1>{loadingText}</h1><p>Vi kontrollerar svenska myndigheters aktuella data.</p></div></div></section>}
+    {mode === "loading" && <section className="hero"><div className="hero-inner loading-panel"><div className="loading-card"><div role="status" aria-live="polite"><div className="spinner" aria-hidden="true" /><h1>{loadingText}</h1><p>{loadingText === "Hämtar din position…" ? "Tillåt platsåtkomst om webbläsaren frågar. Du kan också avbryta och söka efter en ort." : "Vi kontrollerar svenska myndigheters aktuella data."}</p></div><button className="change-button mt-6" type="button" onClick={reset}>Avbryt och sök plats</button></div></div></section>}
     {mode === "result" && status && <FireResult data={status} locationKind={resultKind} onReset={reset} />}
     {children}
   </main>;

@@ -5,7 +5,7 @@ export function SiteHeader() {
   return <>
     <header className="site-header">
       <Link className="brand" href="/" aria-label="Brandrisk – startsida">
-        <Image className="brand-logo" src="/brandrisk-logo-v2.png" alt="" width={48} height={48} preload />
+        <Image className="brand-logo" src="/brandrisk-logo-v3.png" alt="" width={48} height={48} preload />
         BRANDRISK
       </Link>
       <span className="authority-note">Myndighetsdata · uppdateras löpande</span>

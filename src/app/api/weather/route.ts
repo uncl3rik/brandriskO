@@ -13,7 +13,12 @@ export async function POST(request: Request) {
     const url = `https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/${lon.toFixed(2)}/lat/${lat.toFixed(2)}/data.json?timeseries=8&parameters=air_temperature,relative_humidity,wind_speed`;
     const response = await fetch(url, { next: { revalidate: 600 }, signal: AbortSignal.timeout(8000) });
     if (!response.ok) throw new Error("Weather unavailable");
-    const weather = normalizeWeather(await response.json());
+    let weather = normalizeWeather(await response.json());
+    // Revalidation can serve an expired forecast to the first visitor after inactivity.
+    if (!weather) {
+      const fresh = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(4000) });
+      if (fresh.ok) weather = normalizeWeather(await fresh.json());
+    }
     if (!weather) throw new Error("No valid near-term forecast");
     return NextResponse.json(weather, { headers: { "Cache-Control": "private, no-store" } });
   } catch {
