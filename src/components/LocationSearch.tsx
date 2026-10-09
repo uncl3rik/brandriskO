@@ -15,7 +15,7 @@ export function LocationSearch({ busy, onLocate, onSearch }: Props) {
     <div className="divider"><span>eller</span></div>
     <form className="search-form" role="search" onSubmit={submit}>
       <label className="sr-only" htmlFor="place-search">Ange ort eller postnummer</label>
-      <input id="place-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ange ort eller postnummer" autoComplete="postal-code" inputMode="search" />
+      <input id="place-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ange ort eller postnummer" autoComplete="postal-code" inputMode="search" enterKeyHint="search" autoCapitalize="none" spellCheck={false} />
       <button className="search-submit" type="submit" aria-label="Sök plats" disabled={busy || !query.trim()}><ArrowIcon /></button>
     </form>
     <p className="privacy-line"><span aria-hidden="true">●</span> Din exakta position sparas aldrig.</p>

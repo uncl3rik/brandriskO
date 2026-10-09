@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { WeatherSummary } from "@/lib/weather-normalization";
+import { requestTimeout } from "@/lib/request-timeout";
 
 const time = (value: string) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 const value = (n: number | null, unit: string) => n === null ? "Saknas" : `${new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 1 }).format(n)} ${unit}`;
@@ -10,17 +11,19 @@ export function WeatherCard({ latitude, longitude }: { latitude: number; longitu
   const [weather, setWeather] = useState<WeatherSummary | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
-    const controller = new AbortController();
+    const timeout = requestTimeout(10000);
+    let active = true;
     async function load() {
       try {
-        const response = await fetch("/api/weather", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lat: latitude, lon: longitude }), cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) });
+        const response = await fetch("/api/weather", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lat: latitude, lon: longitude }), cache: "no-store", signal: timeout.signal });
         if (!response.ok) throw new Error("Weather unavailable");
         const result: WeatherSummary = await response.json();
-        if (!controller.signal.aborted) setWeather(result);
-      } catch { if (!controller.signal.aborted) setFailed(true); }
+        if (active) setWeather(result);
+      } catch { if (active) setFailed(true); }
+      finally { timeout.dispose(); }
     }
     void load();
-    return () => controller.abort();
+    return () => { active = false; timeout.dispose(); };
   }, [latitude, longitude]);
 
   return <section className="section weather-card" aria-labelledby="weather-heading">

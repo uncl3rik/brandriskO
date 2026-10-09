@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FireResult } from "@/components/FireResult";
 import { LocationSearch } from "@/components/LocationSearch";
+import { requestTimeout } from "@/lib/request-timeout";
 import type { FireStatus, GeocodeResult, PlaceKind } from "@/lib/types";
 
 type Mode = "landing" | "loading" | "result";
@@ -30,8 +31,9 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
     selected.current = location;
     setMatches([]);
     setMode("loading"); setError(null); setLoadingText(location.name ? `Hämtar brandrisk för ${location.name}…` : "Hämtar brandrisk för din plats…");
+    const timeout = requestTimeout(15000);
     try {
-      const response = await fetch("/api/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lat: location.latitude, lon: location.longitude, name: location.name }), cache: "no-store", signal: AbortSignal.timeout(15000) });
+      const response = await fetch("/api/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lat: location.latitude, lon: location.longitude, name: location.name }), cache: "no-store", signal: timeout.signal });
       const body = await response.json() as FireStatus | { error?: string };
       if (id !== requestId.current) return;
       if (!response.ok) throw new Error("error" in body ? body.error : undefined);
@@ -46,14 +48,15 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
       if (id !== requestId.current) return;
       setStatus(null);
       setError("Brandriskdata kunde inte hämtas just nu. Försök igen om en stund."); setMode("landing");
-    }
+    } finally { timeout.dispose(); }
   }
 
   async function search(query: string, updateUrl = true) {
     const id = ++requestId.current;
     setMode("loading"); setError(null); setLoadingText(`Söker efter ${query}…`);
+    const timeout = requestTimeout(12000);
     try {
-      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { signal: AbortSignal.timeout(12000) });
+      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { signal: timeout.signal });
       const body = await response.json() as { results?: GeocodeResult[]; error?: string; code?: string };
       if (id !== requestId.current) return;
       if (!response.ok) {
@@ -70,7 +73,7 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
       if (id !== requestId.current) return;
       const message = reason instanceof Error && reason.message.startsWith("Vi hittade inte") ? reason.message : "Platssökningen kunde inte användas just nu. Försök igen om en stund.";
       setError(message); setMode("landing");
-    }
+    } finally { timeout.dispose(); }
   }
 
   function locate() {
