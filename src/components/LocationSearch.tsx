@@ -11,7 +11,7 @@ export function LocationSearch({ busy, onLocate, onSearch }: Props) {
     if (value) onSearch(value);
   }
   return <div className="location-actions">
-    <button className="location-button" type="button" onClick={onLocate} disabled={busy}><LocateIcon />Använd min position</button>
+    <button className="location-button" type="button" onClick={onLocate} disabled={busy}><LocateIcon />Kolla min plats</button>
     <div className="divider"><span>eller</span></div>
     <form className="search-form" role="search" onSubmit={submit}>
       <label className="sr-only" htmlFor="place-search">Ange ort eller postnummer</label>

@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   }
   try {
     // Coarsen before sending to SMHI or using the URL as a server cache key.
-    const url = `https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/${lon.toFixed(2)}/lat/${lat.toFixed(2)}/data.json?timeseries=8&parameters=air_temperature,relative_humidity,wind_speed`;
+    const url = `https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/${lon.toFixed(2)}/lat/${lat.toFixed(2)}/data.json?parameters=air_temperature,relative_humidity,wind_speed,wind_from_direction,wind_speed_of_gust,cloud_area_fraction,precipitation_amount_mean`;
     const response = await fetch(url, { next: { revalidate: 600 }, signal: AbortSignal.timeout(8000) });
     if (!response.ok) throw new Error("Weather unavailable");
     let weather = normalizeWeather(await response.json());

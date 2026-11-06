@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FireResult } from "@/components/FireResult";
 import { LocationSearch } from "@/components/LocationSearch";
+import { ForestScene } from "@/components/ForestScene";
 import { requestTimeout } from "@/lib/request-timeout";
 import type { FireStatus, GeocodeResult, PlaceKind } from "@/lib/types";
 
@@ -144,14 +145,23 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   }
 
   return <main id="main-content">
-    {mode === "landing" && <section className="hero"><div className="hero-inner landing">
-      <p className="eyebrow">Brandrisk och eldningsförbud idag</p><h1>Kan jag elda här idag?</h1>
-      <p className="intro">Se aktuell brandrisk och registrerade eldningsförbud där du befinner dig.</p>
+    {mode === "landing" && <section className="outdoor-hero" aria-labelledby="outdoor-heading"><div className="outdoor-layout">
+      <div className="outdoor-copy">
+      <p className="outdoor-eyebrow"><span /> Din nästa utflykt börjar här</p>
+      <h1 id="outdoor-heading">Ut idag?<br /><span>Kolla läget</span><br />först.</h1>
+      <p className="outdoor-intro">Skogen väntar. Kolla vädret, brandrisken och eldningsförbuden innan du ger dig ut.</p>
+      <div className="outdoor-search">
+      <p className="search-kicker">VAR GÅR DITT NÄSTA ÄVENTYR?</p>
       <LocationSearch busy={false} onLocate={locate} onSearch={search} />
       <p className="checked">Ortsökning: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></p>
       {matches.length > 0 && <div className="place-options"><h2>Välj plats</h2><ul>{matches.map((place, index) => <li key={`${place.slug}-${index}`}><button type="button" onClick={() => void loadStatus(place, true)}><strong>{place.name}</strong><span>{place.displayName}</span></button></li>)}</ul></div>}
       {error && <div className="inline-error" role="alert">{error}</div>}
-    </div></section>}
+      </div>
+      </div>
+      <ForestScene />
+    </div>
+    <div className="outdoor-strip"><span>En liten koll. Stor omtanke.</span><p>Brandrisk <span aria-hidden="true">↗</span> Eldningsförbud <span aria-hidden="true">↗</span> Prognos</p><a href="/#check-heading">Så fungerar det <span aria-hidden="true">↓</span></a></div>
+    </section>}
     {mode === "loading" && <section className="hero"><div className="hero-inner loading-panel"><div className="loading-card"><div role="status" aria-live="polite"><div className="spinner" aria-hidden="true" /><h1>{loadingText}</h1><p>{loadingText === "Hämtar din position…" ? "Tillåt platsåtkomst om webbläsaren frågar. Du kan också avbryta och söka efter en ort." : "Vi kontrollerar svenska myndigheters aktuella data."}</p></div><button className="change-button mt-6" type="button" onClick={reset}>Avbryt och sök plats</button></div></div></section>}
     {mode === "result" && status && <FireResult data={status} locationKind={resultKind} onReset={reset} />}
     {children}
