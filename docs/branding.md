@@ -1,9 +1,11 @@
-# Transparent logotyp, 2026-09-24
+# Logotyp och ikoner, 2026-11-07
 
-Den vita bakgrunden har tagits bort med det inbyggda imagegen-verktyget. Huvudfil: `public/brandrisk-logo-v3.png`. Den ersätter v2. Alpha har bevarats i PNG-ikoner och favicon. Delningsbilden använder frilagd logotyp på sidans cremefärgade bakgrund.
+Grafiken kommer från användarens `brandrisk-logo-filer.zip`. Originalen i SVG och PNG finns i `public/`, inklusive vita varianter för mörka bakgrunder.
 
-Uppdaterade varianter: `src/app/icon.png`, `src/app/apple-icon.png`, `src/app/favicon.ico`, `public/icon-192.png`, `public/icon-512.png`, `public/og.png`. Referenser och versionsparametrar är uppdaterade. Produktionsbygget passerar och sidhuvudet är visuellt kontrollerat i webbläsaren.
+- Sidhuvudet använder `public/brandrisk-logo.svg`, med symbol och ordmärke i originalets proportioner.
+- `src/app/favicon.ico` och `src/app/icon.png` kommer från paketets favicon respektive `favicon-32.png`.
+- `src/app/apple-icon.png` och `public/apple-touch-icon.png` använder paketets Apple-ikon.
+- Manifestets `public/icon-512.png` använder appikonen från paketet. `public/icon-192.png` är en nedskalad version.
+- `public/og.png` är en delningsbild på 1200 × 630 pixlar med den nya SVG-logotypen på webbplatsens cremefärgade bakgrund.
 
-Prompt till inbyggda imagegen:
-
-> Use case: background-extraction. Edit target: attached Brandrisk logo. Remove ONLY the white background, including the white negative space between colored arcs and pin and inside the pin around the flame. Output a PNG with genuine transparent alpha, no checkerboard baked in. Preserve the original logo exactly: same dark charcoal location pin, flame contours and red orange yellow cream gradients, green yellow orange red arc shapes, positions and proportions. Keep the pale cream center of flame opaque. No redesign, no text, no added shadow or glow. Preserve square canvas and existing padding.
+Next.js genererar ikonernas metadata från filerna i `src/app/`. Manifestikoner och delningsbilder använder versionsparametern `v=4` för att förnya cachelagrade bilder. Den tidigare logotypfilen har tagits bort.

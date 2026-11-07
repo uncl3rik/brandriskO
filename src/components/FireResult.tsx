@@ -25,7 +25,7 @@ export function FireResult({ data, locationKind, onReset }: { data: FireStatus; 
     <section className="hero result-hero weather-first" aria-labelledby="result-place">
       <div className="hero-inner">
         <div className="place-row">
-          <div className="place-label"><PinIcon size={22} /><div><h1 id="result-place">Ute i {data.location.name}</h1>{area && <p>{area}</p>}<p>{locationKind === "gps" ? "Gäller din GPS-position." : locationKind === "settlement" ? "Gäller ortens centrum, inte hela orten." : locationKind === "municipality" ? "Gäller kommunens sökpunkt, inte hela kommunen." : "Gäller den valda sökpunkten, inte hela området."}</p></div></div>
+          <div className="place-label"><PinIcon size={22} /><div><h1 id="result-place" tabIndex={-1}>Ute i {data.location.name}</h1>{area && <p>{area}</p>}<p>{locationKind === "gps" ? "Gäller din GPS-position." : locationKind === "settlement" ? "Gäller ortens centrum, inte hela orten." : locationKind === "municipality" ? "Gäller kommunens sökpunkt, inte hela kommunen." : "Gäller den valda sökpunkten, inte hela området."}</p></div></div>
           <button className="change-button" type="button" onClick={onReset}>Byt plats</button>
         </div>
         <WeatherCard weather={weather} failed={failed} />

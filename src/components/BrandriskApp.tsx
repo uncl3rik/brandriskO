@@ -13,6 +13,10 @@ type SelectedLocation = { latitude: number; longitude: number; name?: string; ki
 
 export function BrandriskApp({ initialQuery, initialLocation, children }: { initialQuery?: string; initialLocation?: SelectedLocation; children?: ReactNode }) {
   const [mode, setMode] = useState<Mode>(initialQuery ? "loading" : "landing");
+  const [query, setQuery] = useState(initialQuery ?? initialLocation?.name ?? "");
+  const searchFeedback = useRef<HTMLDivElement>(null);
+  const focusTransition = useRef(false);
+  const mainContent = useRef<HTMLElement>(null);
   const [status, setStatus] = useState<FireStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingText, setLoadingText] = useState("Hämtar brandrisk…");
@@ -28,6 +32,7 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   }
 
   async function loadStatus(location: SelectedLocation, share = false) {
+    if (share) focusTransition.current = true;
     const id = ++requestId.current;
     selected.current = location;
     setMatches([]);
@@ -53,7 +58,9 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   }
 
   async function search(query: string, updateUrl = true) {
+    if (updateUrl) focusTransition.current = true;
     const id = ++requestId.current;
+    setQuery(query); setMatches([]);
     setMode("loading"); setError(null); setLoadingText(`Söker efter ${query}…`);
     const timeout = requestTimeout(12000);
     try {
@@ -78,6 +85,7 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   }
 
   function locate() {
+    focusTransition.current = true;
     window.history.replaceState({}, "", "/");
     setError(null);
     setMatches([]);
@@ -119,6 +127,10 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
   useEffect(() => () => { requestId.current++; clearPositionTimer(); }, []);
 
   useEffect(() => {
+    if (mode === "landing" && (error || matches.length > 0)) searchFeedback.current?.focus();
+  }, [mode, error, matches]);
+
+  useEffect(() => {
     // Loading the slug is the intended one-time side effect of a shareable place route.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialLocation) void loadStatus(initialLocation);
@@ -137,14 +149,24 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
     return () => { document.removeEventListener("visibilitychange", refresh); clearInterval(timer); };
   }, [mode, status]);
 
+  useEffect(() => {
+    if (!focusTransition.current) return;
+    const target = mode === "result" ? "#result-place" : mode === "loading" ? ".loading-card h1" : "#place-search";
+    if (mode !== "landing" || (!error && matches.length === 0)) {
+      mainContent.current?.querySelector<HTMLElement>(target)?.focus();
+    }
+    if (mode !== "loading") focusTransition.current = false;
+  }, [mode, error, matches]);
+
   function reset() {
+    focusTransition.current = true;
     clearPositionTimer();
     requestId.current++; selected.current = null; setMatches([]);
     setStatus(null); setError(null); setMode("landing");
     if (window.location.pathname !== "/") window.history.pushState({}, "", "/");
   }
 
-  return <main id="main-content">
+  return <main id="main-content" ref={mainContent}>
     {mode === "landing" && <section className="outdoor-hero" aria-labelledby="outdoor-heading"><div className="outdoor-layout">
       <div className="outdoor-copy">
       <p className="outdoor-eyebrow"><span /> Din nästa utflykt börjar här</p>
@@ -152,17 +174,17 @@ export function BrandriskApp({ initialQuery, initialLocation, children }: { init
       <p className="outdoor-intro">Skogen väntar. Kolla vädret, brandrisken och eldningsförbuden innan du ger dig ut.</p>
       <div className="outdoor-search">
       <p className="search-kicker">VAR GÅR DITT NÄSTA ÄVENTYR?</p>
-      <LocationSearch busy={false} onLocate={locate} onSearch={search} />
+      <LocationSearch busy={false} query={query} onQueryChange={setQuery} onLocate={locate} onSearch={search} />
       <p className="checked">Ortsökning: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></p>
-      {matches.length > 0 && <div className="place-options"><h2>Välj plats</h2><ul>{matches.map((place, index) => <li key={`${place.slug}-${index}`}><button type="button" onClick={() => void loadStatus(place, true)}><strong>{place.name}</strong><span>{place.displayName}</span></button></li>)}</ul></div>}
-      {error && <div className="inline-error" role="alert">{error}</div>}
+      {matches.length > 0 && <div className="place-options" ref={searchFeedback} tabIndex={-1} aria-labelledby="place-options-heading"><h2 id="place-options-heading">Välj plats</h2><ul>{matches.map((place, index) => <li key={`${place.slug}-${index}`}><button type="button" onClick={() => void loadStatus(place, true)}><strong>{place.name}</strong><span>{place.displayName}</span></button></li>)}</ul></div>}
+      {error && <div className="inline-error" role="alert" ref={searchFeedback} tabIndex={-1}>{error}</div>}
       </div>
       </div>
       <ForestScene />
     </div>
-    <div className="outdoor-strip"><span>En liten koll. Stor omtanke.</span><p>Brandrisk <span aria-hidden="true">↗</span> Eldningsförbud <span aria-hidden="true">↗</span> Prognos</p><a href="/#check-heading">Så fungerar det <span aria-hidden="true">↓</span></a></div>
+    <div className="outdoor-strip"><span>En liten koll. Stor omtanke.</span><p>Brandrisk <span aria-hidden="true">·</span> Eldningsförbud <span aria-hidden="true">·</span> Prognos</p>{children && <a href="#check-heading">Så fungerar det <span aria-hidden="true">↓</span></a>}</div>
     </section>}
-    {mode === "loading" && <section className="hero"><div className="hero-inner loading-panel"><div className="loading-card"><div role="status" aria-live="polite"><div className="spinner" aria-hidden="true" /><h1>{loadingText}</h1><p>{loadingText === "Hämtar din position…" ? "Tillåt platsåtkomst om webbläsaren frågar. Du kan också avbryta och söka efter en ort." : "Vi kontrollerar svenska myndigheters aktuella data."}</p></div><button className="change-button mt-6" type="button" onClick={reset}>Avbryt och sök plats</button></div></div></section>}
+    {mode === "loading" && <section className="hero"><div className="hero-inner loading-panel"><div className="loading-card"><div role="status" aria-live="polite"><div className="spinner" aria-hidden="true" /><h1 tabIndex={-1}>{loadingText}</h1><p>{loadingText === "Hämtar din position…" ? "Tillåt platsåtkomst om webbläsaren frågar. Du kan också avbryta och söka efter en ort." : "Vi kontrollerar svenska myndigheters aktuella data."}</p></div><button className="change-button mt-6" type="button" onClick={reset}>Avbryt och sök plats</button></div></div></section>}
     {mode === "result" && status && <FireResult data={status} locationKind={resultKind} onReset={reset} />}
     {children}
   </main>;
